@@ -1,3 +1,10 @@
+
+main.txt
+Page
+1
+/
+1
+100%
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -379,6 +386,72 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // --- NEW: Handle Reset with Biometrics Verification ---
+  Future<void> _handleResetWithBiometrics() async {
+    bool isAuthorized = false;
+    try {
+      final bool canAuthenticate =
+          await auth.canCheckBiometrics || await auth.isDeviceSupported();
+
+      if (canAuthenticate) {
+        // Authenticate the user before allowing them to see the reset dialog
+        isAuthorized = await auth.authenticate(
+          localizedReason: 'Verify identity to reset app data',
+          options: const AuthenticationOptions(
+            biometricOnly: true,
+            stickyAuth: true,
+          ),
+        );
+      } else {
+        // If device has no biometrics, allow proceed or handle accordingly
+        isAuthorized = true;
+      }
+    } catch (e) {
+      debugPrint("Reset Auth Error: $e");
+      // Optionally show error to user
+      return;
+    }
+
+    if (isAuthorized && mounted) {
+      _showResetConfirmation();
+    }
+  }
+
+  void _showResetConfirmation() {
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: const Text("Reset App?"),
+        content: const Text(
+            "This will permanently delete your login credentials, "
+            "biometric settings, and all app configurations. "
+            "You will need to create a new account."),
+        actions: <CupertinoDialogAction>[
+          CupertinoDialogAction(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              await box.clear();
+              if (context.mounted) {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => const SignupPage(),
+                  ),
+                );
+              }
+            },
+            child: const Text("Reset Everything"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isBiometricEnabled = box.get("biometrics") ?? false;
@@ -452,40 +525,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: const Text("Reset App Data",
                           style: TextStyle(
                               fontSize: 14, color: CupertinoColors.systemGrey)),
-                      onPressed: () {
-                        showCupertinoDialog(
-                          context: context,
-                          builder: (BuildContext context) => CupertinoAlertDialog(
-                            title: const Text("Reset App?"),
-                            content: const Text(
-                                "This will permanently delete your login credentials, "
-                                "biometric settings, and all app configurations. "
-                                "You will need to create a new account."),
-                            actions: <CupertinoDialogAction>[
-                              CupertinoDialogAction(
-                                child: const Text("Cancel"),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                              CupertinoDialogAction(
-                                isDestructiveAction: true,
-                                onPressed: () async {
-                                  await box.clear();
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                    Navigator.pushReplacement(
-                                      context,
-                                      CupertinoPageRoute(
-                                        builder: (context) => const SignupPage(),
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: const Text("Reset Everything"),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                      onPressed: _handleResetWithBiometrics, // Updated Action
                     )
                   ],
                 ),
@@ -497,3 +537,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+Ipinapakita ang main.txt.
