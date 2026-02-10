@@ -1,10 +1,3 @@
-
-main.txt
-Page
-1
-/
-1
-100%
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -537,4 +530,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-Ipinapakita ang main.txt.
